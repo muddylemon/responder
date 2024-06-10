@@ -84,7 +84,7 @@ def scrape_google_news(search_term, num_results=5):
     for page in range(1, NUM_PAGES):
         if len(results) >= num_results:
             break
-        googlenews.getpage(page)
+        googlenews.get_page(page)
         results.extend(googlenews.results())
 
     final_results = {item['title']: item for item in results}.values()
