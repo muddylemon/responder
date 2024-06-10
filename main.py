@@ -6,7 +6,7 @@ from GoogleNews import GoogleNews
 
 from llm import generate
 from retriever import search
-from models import MISTRAL_OPENORCA
+from models import LLAMA3
 from utils import slugify, pc, remove_query_parameters
 
 output_directory = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -127,7 +127,7 @@ What are the key points from the source documents? {doc_content}
     """
 
     posts, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
-                        context=[], model=MISTRAL_OPENORCA)
+                        context=[], model=LLAMA3)
     return posts
 
 
@@ -156,7 +156,7 @@ What does WWT have to say about this topic? {answer}
 What are the key points from the source documents? {doc_content}
     """
     plan, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
-                       context=[], model=MISTRAL_OPENORCA)
+                       context=[], model=LLAMA3)
     return plan
 
 

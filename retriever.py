@@ -7,8 +7,8 @@ from langchain_community.vectorstores import Chroma
 from constants import CHROMA_SETTINGS
 
 
-from models import MISTRAL_OPENORCA
-model = MISTRAL_OPENORCA
+from models import LLAMA3
+model = LLAMA3
 
 # https://www.sbert.net/docs/pretrained_models.html
 
