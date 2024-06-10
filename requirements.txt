@@ -3,3 +3,7 @@ nltk==3.8.1
 beautifulsoup4==4.12.3
 GoogleNews==1.6.14
 termcolor==2.4.0
+langchain==0.2.3
+chromadb==0.5.0
+langchain-community==0.2.3
+sentence-transformers==3.0.1
