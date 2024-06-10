@@ -7,7 +7,7 @@ from GoogleNews import GoogleNews
 from llm import generate
 from retriever import search
 from models import MISTRAL_OPENORCA
-from utils import slugify, pc
+from utils import slugify, pc, remove_query_parameters
 
 output_directory = os.path.join(os.path.dirname(__file__), 'outputs')
 os.makedirs(output_directory, exist_ok=True)
@@ -15,7 +15,7 @@ os.makedirs(output_directory, exist_ok=True)
 NEWS_PERIOD = '30d'  # '1d', '7d', '1m', '1y'
 NEWS_LANG = 'en'
 NEWS_REGION = 'US'
-NUM_PAGES = 4  # Number of pages to scrape from Google News, each contains 10 results
+NUM_PAGES = 2  # Number of pages to scrape from Google News, each contains 10 results
 
 PLATFORM_INSTRUCTIONS = {
     "twitter": {
@@ -64,11 +64,11 @@ PLATFORM_INSTRUCTIONS = {
 }
 
 
-def get_platform_instructions(platform):
+def get_platform_instructions(platform: str):
     return PLATFORM_INSTRUCTIONS.get(platform.lower(), PLATFORM_INSTRUCTIONS["default"])
 
 
-def scrape_google_news(search_term, num_results=5):
+def scrape_google_news(search_term: str, num_results: int = 5) -> list[dict]:
     """
     Scrapes Google News for the given search term and returns the top num_results.
 
@@ -91,12 +91,15 @@ def scrape_google_news(search_term, num_results=5):
     # Convert datetime objects to strings before serializing to JSON
     for result in final_results:
         result['datetime'] = result['datetime'].strftime('%Y-%m-%d')
+        result['link'] = remove_query_parameters(
+            result['link'], ['ved', 'usg'])
 
     return list(final_results)
 
 
-def generate_social_media_posts(plan: str, platform: str) -> str:
+def generate_social_media_posts(plan: str, platform: str, answer: str, docs: dict) -> str:
     instructions = get_platform_instructions(platform)
+    doc_content = '\n\n'.join(set([doc.page_content for doc in docs]))
     systemPrompt = f"""
 Act as a social media content creator for World Wide Technology (WWT). 
 Your job is to create social media posts that reflect the values and goals of WWT. 
@@ -117,6 +120,10 @@ Write {instructions['number_of_posts']} {platform} post(s) that conform to the c
 
 {plan}
 
+Research Results: 
+What does WWT have to say about this topic? {answer}
+What are the key points from the source documents? {doc_content}
+
     """
 
     posts, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
@@ -125,6 +132,9 @@ Write {instructions['number_of_posts']} {platform} post(s) that conform to the c
 
 
 def generate_social_media_plan(article: str, topic: str, answer: str, docs: dict) -> str:
+
+    doc_content = '\n\n'.join(set([doc.page_content for doc in docs]))
+
     systemPrompt = f"""
 Act as a social media manager for World Wide Technology (WWT). 
 Your job is to create a social media plan that reflects the values and goals of WWT. 
@@ -143,7 +153,7 @@ Original Link: {article['link']}
 
 Research Results: 
 What does WWT have to say about this topic? {answer}
-What are the key points from the source documents? {docs}
+What are the key points from the source documents? {doc_content}
     """
     plan, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
                        context=[], model=MISTRAL_OPENORCA)
@@ -178,7 +188,7 @@ def main():
 
         pc("--------------------", "light_grey")
         answer, docs = search(
-            f"what does WWT have to say about: {result['title']}")
+            f"Summarize the information as it relates to WWT about: {topic} - {result['title']}")
         pc(f'Answer: {answer}', "light_red")
         pc(f"Source documents: {docs}", "light_yellow")
         pc("--------------------", "light_grey")
@@ -188,16 +198,16 @@ def main():
         pc(plan, "yellow")
 
         pc(f'Generating tweets for {result["title"]}...', "light_green")
-        tweets = generate_social_media_posts(plan, 'twitter')
+        tweets = generate_social_media_posts(plan, 'twitter', answer, docs)
         pc(f"tweets : {tweets}", "yellow")
 
         pc(f'Generating Facebook posts for {result["title"]}...', "light_blue")
-        fb_posts = generate_social_media_posts(plan, 'facebook')
+        fb_posts = generate_social_media_posts(plan, 'facebook', answer, docs)
         pc(f" Facebook posts : {fb_posts}", "yellow")
 
         pc(f'Generating LinkedIn posts for {result["title"]}...', "light_red")
         linkedin_posts = generate_social_media_posts(
-            plan, 'linkedin')
+            plan, 'linkedin', answer, docs)
         pc(f"LinkedIn posts : {linkedin_posts}", "yellow")
 
         pc("--------------------", "light_grey")
@@ -208,6 +218,8 @@ def main():
             'link': result['link'],
             'date': result['datetime'],
             'plan': plan,
+            'answer': answer,
+            'source_docs': [doc.page_content for doc in docs],
             'tweets': tweets.split('\n\n'),
             'facebook_posts': fb_posts.split('\n\n'),
             'linkedin_posts': linkedin_posts.split('\n\n')

@@ -69,6 +69,12 @@
                       /\n/g,
                       "<br>"
                     )}</p>
+                    <p><strong>Summary Retrieval:</strong> ${post.answer}</p>
+                    <p><strong>Source Docs:</strong> ${post.source_docs.map(
+                      (doc) => {
+                        return `<p>${doc}</p>`;
+                      }
+                    )}</p>
                 `;
           postsContent.innerHTML += articleInfo;
 
