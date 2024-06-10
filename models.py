@@ -3,6 +3,7 @@
 GEMMA = "gemma:7b"
 GEMMA_LATEST = "gemma:latest"
 LLAMA3 = "llama3:latest"
+LLAMA2 = "llama2:latest"
 LLTEXT = "llama3:text"
 MISTRAL = "mistral:latest"
 MISTRAL_OPENORCA = "mistral-openorca:latest"

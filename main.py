@@ -6,8 +6,8 @@ from datetime import date, timedelta
 from GoogleNews import GoogleNews
 
 from llm import generate
-from models import MISTRAL_OPENORCA
-from utils import slugify
+from models import LLAMA2
+from utils import slugify, pc
 
 output_directory = os.path.join(os.path.dirname(__file__), 'outputs')
 os.makedirs(output_directory, exist_ok=True)
@@ -125,7 +125,7 @@ This is the third {platform} post (if needed).
 
 
     """
-    posts, _ = generate(prompt=prompt, context=[], model=MISTRAL_OPENORCA)
+    posts, _ = generate(prompt=prompt, context=[], model=LLAMA2)
     return posts
 
 
@@ -143,8 +143,7 @@ The plan should include everything from the article that a content creator would
 The plan should be no longer than 500 words.
 Return the plan as a string without any comments.
     """
-    plan, _ = generate(prompt=prompt, context=[], model=MISTRAL_OPENORCA)
-    print(f'Plan for "{article["title"]}":\n\n{plan}\n')
+    plan, _ = generate(prompt=prompt, context=[], model=LLAMA2)
     return plan
 
 
@@ -160,7 +159,7 @@ def main():
     output_directory = os.path.join(output_directory, topic_directory)
     os.makedirs(output_directory, exist_ok=True)
 
-    print(f'Searching for articles on "{topic}"...')
+    pc(f'Searching for articles on "{topic}"...')
     results = scrape_google_news(topic, 2)
 
     output_file = os.path.join(output_directory, 'news.json')
@@ -174,21 +173,23 @@ def main():
 
     for result in results:
         plan = generate_social_media_plan(result, topic)
+        pc(f'Generating social media plan for {result["title"]}...')
+        pc(plan, "yellow")
 
-        print(f'Generating tweets for {result["title"]}...')
+        pc(f'Generating tweets for {result["title"]}...', "light_green")
         tweets = generate_social_media_posts(plan, 'twitter').split('\n\n')
-        print(f"tweets : {tweets}")
+        pc(f"tweets : {tweets}")
 
-        print(f'Generating Facebook posts for {result["title"]}...')
+        pc(f'Generating Facebook posts for {result["title"]}...', "light_blue")
         fb_posts = generate_social_media_posts(plan, 'facebook').split('\n\n')
-        print(f" Facebook posts : {fb_posts}")
+        pc(f" Facebook posts : {fb_posts}")
 
-        print(f'Generating LinkedIn posts for {result["title"]}...')
+        pc(f'Generating LinkedIn posts for {result["title"]}...', "blue")
         linkedin_posts = generate_social_media_posts(
             plan, 'linkedin').split('\n\n')
-        print(f"LinkedIn posts : {linkedin_posts}")
+        pc(f"LinkedIn posts : {linkedin_posts}", "blue")
 
-        print("--------------------")
+        pc("--------------------", "red")
         # Save posts in output_directory as JSON
         posts = {
             'topic': topic,

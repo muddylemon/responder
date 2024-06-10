@@ -1,4 +1,14 @@
 import re
+import logging
+from termcolor import colored
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def pc(text: str, color: str = "green") -> None:
+    print(colored(text, color))
 
 
 def slugify(s) -> str:
