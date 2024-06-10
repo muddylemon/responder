@@ -12,26 +12,28 @@ from utils import slugify
 output_directory = os.path.join(os.path.dirname(__file__), 'outputs')
 os.makedirs(output_directory, exist_ok=True)
 
-# Google News parameters
-NEWS_PERIOD = '30d'
+NEWS_PERIOD = '30d'  # '1d', '7d', '1m', '1y'
 NEWS_LANG = 'en'
 NEWS_REGION = 'US'
-NUM_PAGES = 4
+NUM_PAGES = 4  # Number of pages to scrape from Google News, each contains 10 results
 
 PLATFORM_INSTRUCTIONS = {
     "twitter": {
         "max_length": 280,
+        "number_of_posts": 5,
         "conventions": [
             "Use hashtags for trending topics.",
             "Tag relevant accounts.",
             "Use a casual and engaging tone."
+            "Asking a question is often a good way to engage the audience."
         ],
         "audience": "General public, tech enthusiasts, WWT followers."
     },
     "facebook": {
         "max_length": 2000,
+        "number_of_posts": 2,
         "conventions": [
-            "Use a more detailed and informative tone.",
+            "Use a detailed and informative tone.",
             "Encourage engagement with questions.",
             "Include links and multimedia content."
         ],
@@ -39,21 +41,25 @@ PLATFORM_INSTRUCTIONS = {
     },
     "linkedin": {
         "max_length": 1300,
+        "number_of_posts": 1,
         "conventions": [
             "Maintain a professional tone.",
             "Highlight business benefits and insights.",
-            "Use industry-specific hashtags."
+            "Use industry-specific hashtags.",
+            "Emphasize growth opportunities."
         ],
         "audience": "Professionals, industry leaders, potential clients."
     },
     "default": {
         "max_length": 1000,
+        "number_of_posts": 3,
         "conventions": [
             "Adapt the tone and style based on the platform.",
             "Provide value and insights.",
+            "Show how WWT contributes to the industry.",
             "Encourage engagement and sharing."
         ],
-        "audience": "General audience."
+        "audience": "General audience, WWT followers, potential clients."
     }
 }
 
@@ -86,7 +92,7 @@ def scrape_google_news(search_term, num_results=5):
     for result in final_results:
         result['datetime'] = result['datetime'].strftime('%Y-%m-%d')
 
-    return list(final_results)[:num_results]
+    return list(final_results)
 
 
 def generate_social_media_posts(plan: str, platform: str) -> str:
