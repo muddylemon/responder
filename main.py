@@ -1,12 +1,11 @@
 import json
 import os
 import sys
-from datetime import date, timedelta
 
 from GoogleNews import GoogleNews
 
 from llm import generate
-from models import LLAMA2
+from models import MISTRAL_OPENORCA
 from utils import slugify, pc
 
 output_directory = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -85,7 +84,7 @@ def scrape_google_news(search_term, num_results=5):
         if len(results) >= num_results:
             break
         googlenews.get_page(page)
-        results.extend(googlenews.results())
+        results.extend(googlenews.results(sort=True))
 
     final_results = {item['title']: item for item in results}.values()
     # Convert datetime objects to strings before serializing to JSON
@@ -115,7 +114,7 @@ It is important to return the posts in the correct format.
 Your job depends on writing shareable and viral content that will engage the audience and promote the brand of WWT.
 
     """
-    posts, _ = generate(prompt=prompt, context=[], model=LLAMA2)
+    posts, _ = generate(prompt=prompt, context=[], model=MISTRAL_OPENORCA)
     return posts
 
 
@@ -133,7 +132,7 @@ The plan should include everything from the article that a content creator would
 The plan should be no longer than 500 words.
 Return the plan as a string without any comments.
     """
-    plan, _ = generate(prompt=prompt, context=[], model=LLAMA2)
+    plan, _ = generate(prompt=prompt, context=[], model=MISTRAL_OPENORCA)
     return plan
 
 
