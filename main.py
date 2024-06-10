@@ -4,9 +4,21 @@ from llm import generate
 from GoogleNews import GoogleNews
 from datetime import date, timedelta
 from models import MISTRAL_OPENORCA
+from utils import slugify
+import os
+import json
+
+output_directory = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
 def scrape_google_news(search_term, num_results=5):
+    """
+    Scrapes Google News for the given search term and returns the top num_results.
+
+    :param search_term: The search term to search for.
+    :param num_results: The number of results to return.
+    :return: A list of Google News results.
+    """
     googlenews = GoogleNews(period='30d', lang='en', region='US')
     googlenews.search(search_term)
 
@@ -18,6 +30,10 @@ def scrape_google_news(search_term, num_results=5):
         results.extend(googlenews.result())
 
     final_results = {item['title']: item for item in results}.values()
+    # Convert datetime objects to strings before serializing to JSON
+    for result in final_results:
+        result['datetime'] = result['datetime'].strftime('%Y-%m-%d')
+
     return list(final_results)[:num_results]
 
 
@@ -78,8 +94,19 @@ def main():
         sys.exit(1)
 
     topic = sys.argv[1]
+    # Create a directory for the topic
+    global output_directory
+    topic_directory = slugify(topic)
+    output_directory = os.path.join(output_directory, topic_directory)
+    os.makedirs(output_directory, exist_ok=True)
+
     print(f'Searching for articles on "{topic}"...')
     results = scrape_google_news(topic, 2)
+
+    output_file = os.path.join(output_directory, 'news.json')
+    with open(output_file, 'w') as f:
+        json.dump(results, f)
+
     print(f'Found {len(results)} articles on "{topic}"')
     print("--------------------")
 
@@ -93,14 +120,26 @@ def main():
         print(f"tweets : {tweets}")
 
         print(f'Generating Facebook posts for {result["title"]}...')
-        fb_posts = generate_social_media_posts(plan, 'facebook')
+        fb_posts = generate_social_media_posts(plan, 'facebook').split('\n\n')
         print(f" Facebook posts : {fb_posts}")
 
         print(f'Generating LinkedIn posts for {result["title"]}...')
-        linkedin_posts = generate_social_media_posts(plan, 'linkedin')
+        linkedin_posts = generate_social_media_posts(
+            plan, 'linkedin').split('\n\n')
         print(f"LinkedIn posts : {linkedin_posts}")
 
         print("--------------------")
+        # Save posts in output_directory as JSON
+        posts = {
+            'topic': topic,
+            'plan': plan,
+            'tweets': tweets,
+            'facebook_posts': fb_posts,
+            'linkedin_posts': linkedin_posts
+        }
+        output_posts_file = os.path.join(output_directory, 'posts.json')
+        with open(output_posts_file, 'w') as f:
+            json.dump(posts, f)
 
 
 if __name__ == "__main__":
