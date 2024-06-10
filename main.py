@@ -114,16 +114,6 @@ Do not label or comment on the posts.
 It is important to return the posts in the correct format.
 Your job depends on writing shareable and viral content that will engage the audience and promote the brand of WWT.
 
-Example Response: 
-This is the first {platform} post.
-
-
-This is the second {platform} post.
-
-
-This is the third {platform} post (if needed).
-
-
     """
     posts, _ = generate(prompt=prompt, context=[], model=LLAMA2)
     return posts
@@ -138,7 +128,7 @@ Title: {article['title']}
 Summary: {article['desc']}
 Original Link: {article['link']}
 
-The plan should explain the perspective WWT would take on the topic, the goals of the social media campaign, the tone of the posts, and the key messages to be communicated.
+The plan should explain the perspective WWT would take on the topic, the tone of the posts, and the key messages to be communicated.
 The plan should include everything from the article that a content creator would need to know to create the posts.
 The plan should be no longer than 500 words.
 Return the plan as a string without any comments.
