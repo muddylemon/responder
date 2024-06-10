@@ -97,12 +97,9 @@ def scrape_google_news(search_term, num_results=5):
 
 def generate_social_media_posts(plan: str, platform: str) -> str:
     instructions = get_platform_instructions(platform)
-    prompt = f"""
-Act as a social media manager for World Wide Technology (WWT). Your job is to create social media posts that reflect the values and goals of WWT. 
-Write {instructions['number_of_posts']} {platform} post(s) that conform to the practices of the {platform} based on the following plan provided by your social media manager:
-
-{plan}
-
+    systemPrompt = f"""
+Act as a social media content creator for World Wide Technology (WWT). 
+Your job is to create social media posts that reflect the values and goals of WWT. 
 
 Rules:
 - Maximum length: {instructions['max_length']} characters
@@ -113,27 +110,43 @@ Return each post as a string followed by TWO newlines.
 Do not label or comment on the posts. 
 It is important to return the posts in the correct format.
 Your job depends on writing shareable and viral content that will engage the audience and promote the brand of WWT.
+    """
+
+    prompt = f"""
+Write {instructions['number_of_posts']} {platform} post(s) that conform to the conventions of the {platform} based on the following plan provided by your social media manager:
+
+{plan}
 
     """
-    posts, _ = generate(prompt=prompt, context=[], model=MISTRAL_OPENORCA)
+
+    posts, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
+                        context=[], model=MISTRAL_OPENORCA)
     return posts
 
 
-def generate_social_media_plan(article, topic) -> str:
-    prompt = f"""
-Act as a social media manager for World Wide Technology (WWT). Your job is to create a social media plan that reflects the values and goals of WWT. 
-Write a social media plan in response to this article: 
-Topic: {topic}
-Title: {article['title']} 
-Summary: {article['desc']}
-Original Link: {article['link']}
-
+def generate_social_media_plan(article: str, topic: str, answer: str, docs: dict) -> str:
+    systemPrompt = f"""
+Act as a social media manager for World Wide Technology (WWT). 
+Your job is to create a social media plan that reflects the values and goals of WWT. 
+Your plan will be given to content writers who will create social media posts based on the plan.
 The plan should explain the perspective WWT would take on the topic, the tone of the posts, and the key messages to be communicated.
 The plan should include everything from the article that a content creator would need to know to create the posts.
 The plan should be no longer than 500 words.
 Return the plan as a string without any comments.
     """
-    plan, _ = generate(prompt=prompt, context=[], model=MISTRAL_OPENORCA)
+    prompt = f"""
+    Write a social media plan in response to this article: 
+Topic: {topic}
+Title: {article['title']} 
+Summary: {article['desc']}
+Original Link: {article['link']}
+
+Research Results: 
+What does WWT have to say about this topic? {answer}
+What are the key points from the source documents? {docs}
+    """
+    plan, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
+                       context=[], model=MISTRAL_OPENORCA)
     return plan
 
 
@@ -162,16 +175,17 @@ def main():
     print("Generating social media posts...")
     posts = []
     for result in results:
-        pc(f'Generating social media plan for {result["title"]}...', "magenta")
-        plan = generate_social_media_plan(result, topic)
-        pc(plan, "yellow")
 
         pc("--------------------", "light_grey")
         answer, docs = search(
-            f"what experience does WWT have with: {result['title']}")
-        pc(f'Answer: {answer}', "light_yellow")
+            f"what does WWT have to say about: {result['title']}")
+        pc(f'Answer: {answer}', "light_red")
         pc(f"Source documents: {docs}", "light_yellow")
         pc("--------------------", "light_grey")
+
+        pc(f'Generating social media plan for {result["title"]}...', "magenta")
+        plan = generate_social_media_plan(result, topic, answer, docs)
+        pc(plan, "yellow")
 
         pc(f'Generating tweets for {result["title"]}...', "light_green")
         tweets = generate_social_media_posts(plan, 'twitter')
