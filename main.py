@@ -156,13 +156,13 @@ def main():
     with open(output_file, 'w') as f:
         json.dump(results, f)
 
-    print(f'Found {len(results)} articles on "{topic}"')
-    print("--------------------")
+    pc(f'Found {len(results)} articles on "{topic}"', "light_cyan")
+    pc("--------------------", "light_grey")
 
     print("Generating social media posts...")
     posts = []
     for result in results:
-        pc(f'Generating social media plan for {result["title"]}...')
+        pc(f'Generating social media plan for {result["title"]}...', "magenta")
         plan = generate_social_media_plan(result, topic)
         pc(plan, "yellow")
 
@@ -174,15 +174,14 @@ def main():
         fb_posts = generate_social_media_posts(plan, 'facebook')
         pc(f" Facebook posts : {fb_posts}", "yellow")
 
-        pc(f'Generating LinkedIn posts for {result["title"]}...', "blue")
+        pc(f'Generating LinkedIn posts for {result["title"]}...', "light_red")
         linkedin_posts = generate_social_media_posts(
             plan, 'linkedin')
-        pc(f"LinkedIn posts : {linkedin_posts}", "blue")
+        pc(f"LinkedIn posts : {linkedin_posts}", "yellow")
 
-        pc("--------------------", "red")
+        pc("--------------------", "light_grey")
         # Save posts in output_directory as JSON
         new_posts = {
-            'topic': topic,
             'title': result['title'],
             'desc': result['desc'],
             'link': result['link'],
