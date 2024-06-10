@@ -139,7 +139,7 @@ Return the plan as a string without any comments.
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python script.py <search_term>")
+        print("Usage: python main.py <search_term>")
         sys.exit(1)
 
     topic = sys.argv[1]
@@ -160,37 +160,43 @@ def main():
     print("--------------------")
 
     print("Generating social media posts...")
-
+    posts = []
     for result in results:
-        plan = generate_social_media_plan(result, topic)
         pc(f'Generating social media plan for {result["title"]}...')
+        plan = generate_social_media_plan(result, topic)
         pc(plan, "yellow")
 
         pc(f'Generating tweets for {result["title"]}...', "light_green")
-        tweets = generate_social_media_posts(plan, 'twitter').split('\n\n')
-        pc(f"tweets : {tweets}")
+        tweets = generate_social_media_posts(plan, 'twitter')
+        pc(f"tweets : {tweets}", "yellow")
 
         pc(f'Generating Facebook posts for {result["title"]}...', "light_blue")
-        fb_posts = generate_social_media_posts(plan, 'facebook').split('\n\n')
-        pc(f" Facebook posts : {fb_posts}")
+        fb_posts = generate_social_media_posts(plan, 'facebook')
+        pc(f" Facebook posts : {fb_posts}", "yellow")
 
         pc(f'Generating LinkedIn posts for {result["title"]}...', "blue")
         linkedin_posts = generate_social_media_posts(
-            plan, 'linkedin').split('\n\n')
+            plan, 'linkedin')
         pc(f"LinkedIn posts : {linkedin_posts}", "blue")
 
         pc("--------------------", "red")
         # Save posts in output_directory as JSON
-        posts = {
+        new_posts = {
             'topic': topic,
+            'title': result['title'],
+            'desc': result['desc'],
+            'link': result['link'],
+            'date': result['datetime'],
             'plan': plan,
-            'tweets': tweets,
-            'facebook_posts': fb_posts,
-            'linkedin_posts': linkedin_posts
+            'tweets': tweets.split('\n\n'),
+            'facebook_posts': fb_posts.split('\n\n'),
+            'linkedin_posts': linkedin_posts.split('\n\n')
         }
-        output_posts_file = os.path.join(output_directory, 'posts.json')
-        with open(output_posts_file, 'w') as f:
-            json.dump(posts, f)
+        posts.append(new_posts)
+
+    output_posts_file = os.path.join(output_directory, 'posts.json')
+    with open(output_posts_file, 'w') as f:
+        json.dump(posts, f)
 
 
 if __name__ == "__main__":
