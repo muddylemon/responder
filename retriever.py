@@ -2,7 +2,7 @@
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.llms import Ollama
-from langchain_community.chains import RetrievalQA
+from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import Chroma
 from constants import CHROMA_SETTINGS
 
@@ -15,7 +15,7 @@ model = MISTRAL_OPENORCA
 # all-mpnet-base-v2  slower/better quality
 embeddings_model_name = "all-MiniLM-L6-v2"
 persist_directory = "db"
-target_source_chunks = 4
+target_source_chunks = 12
 
 
 def search(query: str, hide_source: bool = False, mute_stream: bool = False) -> tuple[str, list[dict]]:

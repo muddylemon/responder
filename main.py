@@ -5,6 +5,7 @@ import sys
 from GoogleNews import GoogleNews
 
 from llm import generate
+from retriever import search
 from models import MISTRAL_OPENORCA
 from utils import slugify, pc
 
@@ -164,6 +165,13 @@ def main():
         pc(f'Generating social media plan for {result["title"]}...', "magenta")
         plan = generate_social_media_plan(result, topic)
         pc(plan, "yellow")
+
+        pc("--------------------", "light_grey")
+        answer, docs = search(
+            f"what experience does WWT have with: {result['title']}")
+        pc(f'Answer: {answer}', "light_yellow")
+        pc(f"Source documents: {docs}", "light_yellow")
+        pc("--------------------", "light_grey")
 
         pc(f'Generating tweets for {result["title"]}...', "light_green")
         tweets = generate_social_media_posts(plan, 'twitter')
