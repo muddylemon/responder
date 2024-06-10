@@ -1,4 +1,5 @@
 newspaper3k==0.2.8
-nltk==3.4.5
-beautifulsoup4==4.9.3
-argparse==1.4.0
+nltk==3.8.1
+beautifulsoup4==4.12.3
+GoogleNews==1.6.14
+termcolor==2.4.0
