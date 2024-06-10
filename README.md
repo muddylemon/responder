@@ -14,9 +14,9 @@ To use Responder, follow these steps:
 
 1. Clone the repository: `git clone https://github.com/muddylemon/responder.git`
 
-2. Install the required dependencies: `pip install -r requirements.txt` 
+2. Install the required dependencies: `pip install -r requirements.txt`
 
-4. Start the application: `python main.py "your search terms"`
+3. Start the application: `python main.py "your search terms"`
 
 ## Usage
 
@@ -29,4 +29,3 @@ To use Responder, follow these steps:
 3. Generate social media content: Select the articles you want to use for your social media content and generate tweets, Facebook posts, or other types of content.
 
 4. Share your content: Copy the generated content and share it on your social media platforms.
-
