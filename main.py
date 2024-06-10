@@ -85,7 +85,7 @@ def scrape_google_news(search_term, num_results=5):
         if len(results) >= num_results:
             break
         googlenews.getpage(page)
-        results.extend(googlenews.result())
+        results.extend(googlenews.results())
 
     final_results = {item['title']: item for item in results}.values()
     # Convert datetime objects to strings before serializing to JSON
