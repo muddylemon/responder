@@ -13,17 +13,15 @@ model = LLAMA3
 # https://www.sbert.net/docs/pretrained_models.html
 
 # all-mpnet-base-v2  slower/better quality
-embeddings_model_name = "all-mpnet-base-v2"
+embeddings_model_name = "all-MiniLM-L6-v2"
 persist_directory = "db"
-target_source_chunks = 24
 
 
-def search(query: str, hide_source: bool = False, mute_stream: bool = False) -> list[dict]:
+def search(query: str) -> list[dict]:
     """
     Search for the answer to a question in the database
     :param query: the question to search for
-    :param hide_source: whether to hide the source documents
-    :param mute_stream: whether to mute the streaming output
+    :return: a list of documents related to the query
     """
     embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
 
