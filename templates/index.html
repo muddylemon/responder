@@ -83,10 +83,10 @@
                 `;
           postsContent.innerHTML += articleInfo;
 
-          if (post.tweets.length > 0) {
+          if (post.twitter_posts.length > 0) {
             let tweetsTable =
               "<h3>Tweets</h3><table><tr><th>#</th><th>Content</th></tr>";
-            post.tweets.forEach((tweet, index) => {
+            post.twitter_posts.forEach((tweet, index) => {
               tweetsTable += `<tr><td>${index + 1}</td><td>${tweet}</td></tr>`;
             });
             tweetsTable += "</table>";

@@ -1,5 +1,7 @@
-
+# run > ollama list to view available models
 ORCA2 = "orca2:latest"
+QWEN = "qwen2:latest"
+PHI3 = "phi3:medium"
 GEMMA = "gemma:7b"
 GEMMA_LATEST = "gemma:latest"
 LLAMA3 = "llama3:latest"

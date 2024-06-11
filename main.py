@@ -1,3 +1,4 @@
+import re
 import json
 import os
 import sys
@@ -6,7 +7,7 @@ from GoogleNews import GoogleNews
 
 from llm import generate
 from retriever import search
-from models import LLAMA3 as LLM_MODEL
+from models import PHI3 as LLM_MODEL
 from utils import slugify, pc
 
 import warnings
@@ -140,8 +141,16 @@ excerpts of the source documents:
 
     posts, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
                         context=[], model=LLM_MODEL)
+
+    posts = re.sub(r"Post \d+[:\.\-\s]*", "", posts)
+    posts = re.sub(r"^\d+\.\s*", "", posts, flags=re.MULTILINE)
+
     if "###END###" not in posts:
-        posts += "###END###"
+        posts = re.sub(r"\n\n\n", "###END###", posts)
+
+    if "###END###" not in posts:
+        posts = re.sub(r"\n\n", "###END###", posts)
+
     return posts
 
 
@@ -192,7 +201,7 @@ def main():
     os.makedirs(output_directory, exist_ok=True)
 
     pc(f'Searching for articles on "{topic}"...', "light_grey")
-    results = scrape_google_news(topic, 2)
+    results = scrape_google_news(topic, 4)
 
     output_file = os.path.join(output_directory, 'news.json')
     with open(output_file, 'w') as f:
@@ -205,7 +214,7 @@ def main():
     for result in results:
 
         docs = search(
-            f"Summarize the provided context as it relates to World Wide Technology and {topic}")
+            f"Summarize the provided context as it relates to World Wide Technology and {topic} in response to the article: {result['title']}")
 
         pc(f'Documents: {len(docs)}', "light_cyan")
 
@@ -213,30 +222,21 @@ def main():
         plan = generate_social_media_plan(result, topic, docs)
         pc(plan, "light_magenta")
 
-        pc(f'Generating tweets for {result["title"]}...', "green")
-        tweets = generate_social_media_posts(plan, 'twitter', docs)
-        pc(f"tweets : {tweets}", "light_green")
-
-        pc(f'Generating Facebook posts for {result["title"]}...', "blue")
-        fb_posts = generate_social_media_posts(plan, 'facebook',  docs)
-        pc(f" Facebook posts : {fb_posts}", "light_blue")
-
-        pc(f'Generating LinkedIn posts for {result["title"]}...', "red")
-        linkedin_posts = generate_social_media_posts(
-            plan, 'linkedin',  docs)
-        pc(f"LinkedIn posts : {linkedin_posts}", "light_red")
-
         new_posts = {
             'title': result['title'],
             'desc': result['desc'],
             'link': result['link'],
             'date': result['datetime'],
             'plan': plan,
-            'source_docs': [doc.page_content for doc in docs],
-            'tweets': tweets.split('###END###'),
-            'facebook_posts': fb_posts.split('###END###'),
-            'linkedin_posts': linkedin_posts.split('###END###')
+            'source_docs': [doc.page_content for doc in docs]
         }
+
+        for platform in ["twitter", "facebook", "linkedin"]:
+            pc(f'Generating {platform.capitalize()} posts for {result["title"]}...', "green")
+            generated_posts = generate_social_media_posts(plan, platform, docs)
+            pc(f"{platform.capitalize()} posts: {generated_posts}", "light_green")
+            new_posts[f'{platform}_posts'] = generated_posts.split('###END###')
+
         posts.append(new_posts)
 
     output_posts_file = os.path.join(output_directory, 'posts.json')
