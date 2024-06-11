@@ -1,5 +1,5 @@
 
-
+ORCA2 = "orca2:latest"
 GEMMA = "gemma:7b"
 GEMMA_LATEST = "gemma:latest"
 LLAMA3 = "llama3:latest"

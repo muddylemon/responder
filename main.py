@@ -6,11 +6,12 @@ from GoogleNews import GoogleNews
 
 from llm import generate
 from retriever import search
-from models import LLAMA3
-from utils import slugify, pc, remove_query_parameters
+from models import MISTRAL_OPENORCA as LLM_MODEL
+from utils import slugify, pc
 
 output_directory = os.path.join(os.path.dirname(__file__), 'outputs')
 os.makedirs(output_directory, exist_ok=True)
+
 
 NEWS_PERIOD = '30d'  # '1d', '7d', '1m', '1y'
 NEWS_LANG = 'en'
@@ -134,7 +135,7 @@ excerpts of the source documents: {doc_content}
     """
 
     posts, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
-                        context=[], model=LLAMA3)
+                        context=[], model=LLM_MODEL)
     if "###END###" not in posts:
         posts += "###END###"
     return posts
@@ -151,9 +152,15 @@ Act as a social media manager for World Wide Technology (WWT).
 Your job is to create a social media plan that reflects the values and goals of WWT. 
 Your plan will be given to content writers who will create social media posts based on the plan.
 The plan should explain the perspective WWT would take on the topic, the tone of the posts, and the key messages to be communicated.
-The plan should include everything from the article that a content creator would need to know to create the posts.
+The plan should include everything from the article that a content creator would need to know to create posts on twitter, facebook, and linkedin.
 The plan should be no longer than 500 words.
 Return the plan as a string without any comments.
+The plan should explain:
+ * the perspective WWT would take on the topic
+ * the tone of the posts
+ * the key messages to be communicated
+ * Facts or quotes to consider including.
+
     """
     prompt = f"""
     Write a social media plan in response to this article: 
@@ -162,12 +169,12 @@ Title: {article['title']}
 Summary: {article['desc']}
 Original Link: {article['link']}
 
-The following are the results of a search of our internal cms:
+For Additional Context, 
 Summary of source documents: {answer}
 excerpts of the source documents: {doc_content}
     """
     plan, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
-                       context=[], model=LLAMA3)
+                       context=[], model=LLM_MODEL)
     return plan
 
 
@@ -197,10 +204,11 @@ def main():
     for result in results:
 
         answer, docs = search(
-            f"Summarize the information as it relates to World Wide Technology (WWT) about: {topic} - {result['title']}")
+            f"Summarize the provided context as it relates to World Wide Technology and {topic}")
+        docs = docs[:5]
 
         pc(f'Answer: {answer}', "cyan")
-        pc(f"Source documents: {' | '.join(set([doc.page_content for doc in docs]))}", "light_cyan")
+        pc(f'Documents: {len(docs)}', "light_cyan")
 
         pc(f'Generating social media plan for {result["title"]}...', "magenta")
         plan = generate_social_media_plan(result, topic, answer, docs)
