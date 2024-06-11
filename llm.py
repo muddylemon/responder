@@ -7,7 +7,7 @@ url = "http://localhost:11434/api/generate"
 systemPrompt = "You are a helpful content writer and research. Return comprehensive text that is easy to understand."
 
 
-def generate(prompt, context, model=LLAMA3, systemPrompt=systemPrompt, temperature=0.8):
+def generate(prompt, context, model=LLAMA3, systemPrompt=systemPrompt, temperature=0.8) -> tuple[str, list[dict]]:
 
     payload = {
         "system": systemPrompt,

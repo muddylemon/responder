@@ -138,6 +138,8 @@ excerpts of the source documents: {doc_content}
 
     posts, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
                         context=[], model=LLAMA3)
+    if "###END###" not in posts:
+        posts += "###END###"
     return posts
 
 
@@ -227,7 +229,7 @@ def main():
             'date': result['datetime'],
             'plan': plan,
             'answer': answer,
-            'source_docs': set([doc.page_content for doc in docs]),
+            'source_docs': [doc.page_content for doc in docs],
             'tweets': tweets.split('###END###'),
             'facebook_posts': fb_posts.split('###END###'),
             'linkedin_posts': linkedin_posts.split('###END###')
