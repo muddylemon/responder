@@ -13,12 +13,12 @@ model = LLAMA3
 # https://www.sbert.net/docs/pretrained_models.html
 
 # all-mpnet-base-v2  slower/better quality
-embeddings_model_name = "all-MiniLM-L6-v2"
+embeddings_model_name = "all-mpnet-base-v2"
 persist_directory = "db"
 target_source_chunks = 24
 
 
-def search(query: str, hide_source: bool = False, mute_stream: bool = False) -> tuple[str, list[dict]]:
+def search(query: str, hide_source: bool = False, mute_stream: bool = False) -> list[dict]:
     """
     Search for the answer to a question in the database
     :param query: the question to search for
@@ -30,17 +30,11 @@ def search(query: str, hide_source: bool = False, mute_stream: bool = False) -> 
     db = Chroma(persist_directory=persist_directory,
                 embedding_function=embeddings)
 
-    retriever = db.as_retriever(search_kwargs={"k": target_source_chunks})
-    # activate/deactivate the streaming StdOut callback for LLMs
-    callbacks = [] if mute_stream else [StreamingStdOutCallbackHandler()]
+    retriever = db.as_retriever(search_type="mmr", search_kwargs={
+                                'k': 10, 'fetch_k': 50})
 
-    llm = Ollama(model=model, callbacks=callbacks)
+    docs = retriever.invoke(query)
+    if not docs:
+        return "No documents found", []
 
-    qa = RetrievalQA.from_chain_type(
-        llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=not hide_source)
-
-    res = qa(query)
-    answer, docs = res['result'], [
-    ] if hide_source else res['source_documents']
-
-    return answer, docs
+    return docs

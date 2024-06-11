@@ -9,6 +9,9 @@ from retriever import search
 from models import MISTRAL_OPENORCA as LLM_MODEL
 from utils import slugify, pc
 
+import warnings
+warnings.simplefilter("ignore", category=FutureWarning)
+
 output_directory = os.path.join(os.path.dirname(__file__), 'outputs')
 os.makedirs(output_directory, exist_ok=True)
 
@@ -95,7 +98,7 @@ def scrape_google_news(search_term: str, num_results: int = 5) -> list[dict]:
     return list(final_results)[:num_results]
 
 
-def generate_social_media_posts(plan: str, platform: str, answer: str, docs: dict) -> str:
+def generate_social_media_posts(plan: str, platform: str, docs: dict) -> str:
     instructions = get_platform_instructions(platform)
     doc_content = '\n\n'.join(set([doc.page_content.strip() for doc in docs]))
     systemPrompt = f"""
@@ -110,7 +113,8 @@ Rules:
 Return each post as a string.
 Important! Mark the end of each post with this string: ###END### 
 Do not surround the posts with quotes or brackets.
-Do not label or comment on the posts. Return ONLY the posts. 
+Do not label or comment on the posts. For example, do not preface a post with Post 1: or similar.
+Return ONLY the text of the posts followed by the delimiter.  
 Remember to insert the ###END### string at the end of each post!
 It is important to return the posts in the correct format to ensure they are processed correctly.
 Your job depends on writing shareable and viral content that will engage the audience and promote the brand of WWT.
@@ -129,8 +133,8 @@ Write {instructions['number_of_posts']} {platform} {pluralized_post} to help imp
 {plan}
 
 You may use these research results: 
-Summary of source documents: {answer}
-excerpts of the source documents: {doc_content}
+excerpts of the source documents: 
+{doc_content}
 
     """
 
@@ -141,11 +145,9 @@ excerpts of the source documents: {doc_content}
     return posts
 
 
-def generate_social_media_plan(article: str, topic: str, answer: str, docs: dict) -> str:
+def generate_social_media_plan(article: str, topic: str, docs: dict) -> str:
 
     doc_content = '\n\n'.join(set([doc.page_content.strip() for doc in docs]))
-    if "i don't know" in answer.lower():
-        answer = "refer to the research for more info"
 
     systemPrompt = f"""
 Act as a social media manager for World Wide Technology (WWT). 
@@ -169,9 +171,8 @@ Title: {article['title']}
 Summary: {article['desc']}
 Original Link: {article['link']}
 
-For Additional Context, 
-Summary of source documents: {answer}
-excerpts of the source documents: {doc_content}
+For Additional Context, excerpts of the source documents:
+{doc_content}
     """
     plan, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
                        context=[], model=LLM_MODEL)
@@ -203,28 +204,26 @@ def main():
     posts = []
     for result in results:
 
-        answer, docs = search(
+        docs = search(
             f"Summarize the provided context as it relates to World Wide Technology and {topic}")
-        docs = docs[:5]
 
-        pc(f'Answer: {answer}', "cyan")
         pc(f'Documents: {len(docs)}', "light_cyan")
 
         pc(f'Generating social media plan for {result["title"]}...', "magenta")
-        plan = generate_social_media_plan(result, topic, answer, docs)
+        plan = generate_social_media_plan(result, topic, docs)
         pc(plan, "light_magenta")
 
         pc(f'Generating tweets for {result["title"]}...', "green")
-        tweets = generate_social_media_posts(plan, 'twitter', answer, docs)
+        tweets = generate_social_media_posts(plan, 'twitter', docs)
         pc(f"tweets : {tweets}", "light_green")
 
         pc(f'Generating Facebook posts for {result["title"]}...', "blue")
-        fb_posts = generate_social_media_posts(plan, 'facebook', answer, docs)
+        fb_posts = generate_social_media_posts(plan, 'facebook',  docs)
         pc(f" Facebook posts : {fb_posts}", "light_blue")
 
         pc(f'Generating LinkedIn posts for {result["title"]}...', "red")
         linkedin_posts = generate_social_media_posts(
-            plan, 'linkedin', answer, docs)
+            plan, 'linkedin',  docs)
         pc(f"LinkedIn posts : {linkedin_posts}", "light_red")
 
         new_posts = {
@@ -233,7 +232,6 @@ def main():
             'link': result['link'],
             'date': result['datetime'],
             'plan': plan,
-            'answer': answer,
             'source_docs': [doc.page_content for doc in docs],
             'tweets': tweets.split('###END###'),
             'facebook_posts': fb_posts.split('###END###'),
