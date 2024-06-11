@@ -82,8 +82,6 @@ def scrape_google_news(search_term: str, num_results: int = 5) -> list[dict]:
 
     results = []
     for page in range(1, NUM_PAGES):
-        if len(results) >= num_results:
-            break
         googlenews.get_page(page)
         results.extend(googlenews.results(sort=True))
 
@@ -94,7 +92,7 @@ def scrape_google_news(search_term: str, num_results: int = 5) -> list[dict]:
         result['link'] = remove_query_parameters(
             result['link'], ['ved', 'usg'])
 
-    return list(final_results)
+    return list(final_results)[:num_results]
 
 
 def generate_social_media_posts(plan: str, platform: str, answer: str, docs: dict) -> str:
@@ -117,7 +115,7 @@ Remember to insert the ###END### string at the end of each post!
 It is important to return the posts in the correct format to ensure they are processed correctly.
 Your job depends on writing shareable and viral content that will engage the audience and promote the brand of WWT.
 
-Example post:
+Example response:
 
 Just read an interesting article about DevOps. WWT is a leader in DevOps implementation. What do you think about it? ###END###
 
@@ -126,7 +124,7 @@ Just read an interesting article about DevOps. WWT is a leader in DevOps impleme
     pluralized_post = 'posts' if instructions['number_of_posts'] > 1 else 'post'
 
     prompt = f"""
-Write {instructions['number_of_posts']} {platform} {pluralized_post} that helps implement the following plan provided by your social media manager:
+Write {instructions['number_of_posts']} {platform} {pluralized_post} to help implement the following plan provided by your social media manager:
 
 {plan}
 
