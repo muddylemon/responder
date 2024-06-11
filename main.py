@@ -50,13 +50,13 @@ PLATFORM_INSTRUCTIONS = {
         ],
         "audience": "Professionals, industry leaders, potential clients."
     },
-    "default": {
-        "max_length": 1000,
-        "number_of_posts": 3,
+    "blog": {
+        "max_length": 2000,
+        "number_of_posts": 1,
         "conventions": [
-            "Adapt the tone and style based on the platform.",
+            "Write in a professional and informative tone.",
             "Provide value and insights.",
-            "Show how WWT contributes to the industry.",
+            "Demonstrate how WWT contributes to the industry.",
             "Encourage engagement and sharing."
         ],
         "audience": "General audience, WWT followers, potential clients."
@@ -65,7 +65,7 @@ PLATFORM_INSTRUCTIONS = {
 
 
 def get_platform_instructions(platform: str):
-    return PLATFORM_INSTRUCTIONS.get(platform.lower(), PLATFORM_INSTRUCTIONS["default"])
+    return PLATFORM_INSTRUCTIONS.get(platform.lower(), PLATFORM_INSTRUCTIONS["blog"])
 
 
 def scrape_google_news(search_term: str, num_results: int = 5) -> list[dict]:
@@ -82,24 +82,22 @@ def scrape_google_news(search_term: str, num_results: int = 5) -> list[dict]:
 
     results = []
     for page in range(1, NUM_PAGES):
-        if len(results) >= num_results:
-            break
         googlenews.get_page(page)
         results.extend(googlenews.results(sort=True))
 
     final_results = {item['title']: item for item in results}.values()
-    # Convert datetime objects to strings before serializing to JSON
     for result in final_results:
+        # Convert datetime objects to strings before serializing to JSON
         result['datetime'] = result['datetime'].strftime('%Y-%m-%d')
         result['link'] = remove_query_parameters(
             result['link'], ['ved', 'usg'])
 
-    return list(final_results)
+    return list(final_results)[:num_results]
 
 
 def generate_social_media_posts(plan: str, platform: str, answer: str, docs: dict) -> str:
     instructions = get_platform_instructions(platform)
-    doc_content = '\n\n'.join(set([doc.page_content for doc in docs]))
+    doc_content = '\n\n'.join(set([doc.page_content.strip() for doc in docs]))
     systemPrompt = f"""
 Act as a social media content creator for World Wide Technology (WWT). 
 Your job is to create social media posts that reflect the values and goals of WWT. 
@@ -109,31 +107,45 @@ Rules:
 - Conventions: {'; '.join(instructions['conventions'])}
 - Audience: {instructions['audience']}
 
-Return each post as a string followed by TWO newlines. 
-Do not label or comment on the posts. 
-It is important to return the posts in the correct format.
+Return each post as a string.
+Important! Mark the end of each post with this string: ###END### 
+Do not surround the posts with quotes or brackets.
+Do not label or comment on the posts. Return ONLY the posts. 
+Remember to insert the ###END### string at the end of each post!
+It is important to return the posts in the correct format to ensure they are processed correctly.
 Your job depends on writing shareable and viral content that will engage the audience and promote the brand of WWT.
+
+Example response:
+
+Just read an interesting article about DevOps. WWT is a leader in DevOps implementation. What do you think about it? ###END###
+
     """
 
+    pluralized_post = 'posts' if instructions['number_of_posts'] > 1 else 'post'
+
     prompt = f"""
-Write {instructions['number_of_posts']} {platform} post(s) that conform to the conventions of the {platform} based on the following plan provided by your social media manager:
+Write {instructions['number_of_posts']} {platform} {pluralized_post} to help implement the following plan provided by your social media manager:
 
 {plan}
 
-Research Results: 
-What does WWT have to say about this topic? {answer}
-What are the key points from the source documents? {doc_content}
+You may use these research results: 
+Summary of source documents: {answer}
+excerpts of the source documents: {doc_content}
 
     """
 
     posts, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
                         context=[], model=LLAMA3)
+    if "###END###" not in posts:
+        posts += "###END###"
     return posts
 
 
 def generate_social_media_plan(article: str, topic: str, answer: str, docs: dict) -> str:
 
-    doc_content = '\n\n'.join(set([doc.page_content for doc in docs]))
+    doc_content = '\n\n'.join(set([doc.page_content.strip() for doc in docs]))
+    if "i don't know" in answer.lower():
+        answer = "refer to the research for more info"
 
     systemPrompt = f"""
 Act as a social media manager for World Wide Technology (WWT). 
@@ -151,9 +163,9 @@ Title: {article['title']}
 Summary: {article['desc']}
 Original Link: {article['link']}
 
-Research Results: 
-What does WWT have to say about this topic? {answer}
-What are the key points from the source documents? {doc_content}
+The following are the results of a search of our internal cms:
+Summary of source documents: {answer}
+excerpts of the source documents: {doc_content}
     """
     plan, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
                        context=[], model=LLAMA3)
@@ -172,7 +184,7 @@ def main():
     output_directory = os.path.join(output_directory, topic_directory)
     os.makedirs(output_directory, exist_ok=True)
 
-    pc(f'Searching for articles on "{topic}"...')
+    pc(f'Searching for articles on "{topic}"...', "light_grey")
     results = scrape_google_news(topic, 2)
 
     output_file = os.path.join(output_directory, 'news.json')
@@ -180,38 +192,34 @@ def main():
         json.dump(results, f)
 
     pc(f'Found {len(results)} articles on "{topic}"', "light_cyan")
-    pc("--------------------", "light_grey")
 
-    print("Generating social media posts...")
+    pc("Generating social media posts...", "light_grey")
     posts = []
     for result in results:
 
-        pc("--------------------", "light_grey")
         answer, docs = search(
-            f"Summarize the information as it relates to WWT about: {topic} - {result['title']}")
-        pc(f'Answer: {answer}', "light_red")
-        pc(f"Source documents: {docs}", "light_yellow")
-        pc("--------------------", "light_grey")
+            f"Summarize the information as it relates to World Wide Technology (WWT) about: {topic} - {result['title']}")
+
+        pc(f'Answer: {answer}', "cyan")
+        pc(f"Source documents: {' | '.join(set([doc.page_content for doc in docs]))}", "light_cyan")
 
         pc(f'Generating social media plan for {result["title"]}...', "magenta")
         plan = generate_social_media_plan(result, topic, answer, docs)
-        pc(plan, "yellow")
+        pc(plan, "light_magenta")
 
-        pc(f'Generating tweets for {result["title"]}...', "light_green")
+        pc(f'Generating tweets for {result["title"]}...', "green")
         tweets = generate_social_media_posts(plan, 'twitter', answer, docs)
-        pc(f"tweets : {tweets}", "yellow")
+        pc(f"tweets : {tweets}", "light_green")
 
-        pc(f'Generating Facebook posts for {result["title"]}...', "light_blue")
+        pc(f'Generating Facebook posts for {result["title"]}...', "blue")
         fb_posts = generate_social_media_posts(plan, 'facebook', answer, docs)
-        pc(f" Facebook posts : {fb_posts}", "yellow")
+        pc(f" Facebook posts : {fb_posts}", "light_blue")
 
-        pc(f'Generating LinkedIn posts for {result["title"]}...', "light_red")
+        pc(f'Generating LinkedIn posts for {result["title"]}...', "red")
         linkedin_posts = generate_social_media_posts(
             plan, 'linkedin', answer, docs)
-        pc(f"LinkedIn posts : {linkedin_posts}", "yellow")
+        pc(f"LinkedIn posts : {linkedin_posts}", "light_red")
 
-        pc("--------------------", "light_grey")
-        # Save posts in output_directory as JSON
         new_posts = {
             'title': result['title'],
             'desc': result['desc'],
@@ -220,9 +228,9 @@ def main():
             'plan': plan,
             'answer': answer,
             'source_docs': [doc.page_content for doc in docs],
-            'tweets': tweets.split('\n\n'),
-            'facebook_posts': fb_posts.split('\n\n'),
-            'linkedin_posts': linkedin_posts.split('\n\n')
+            'tweets': tweets.split('###END###'),
+            'facebook_posts': fb_posts.split('###END###'),
+            'linkedin_posts': linkedin_posts.split('###END###')
         }
         posts.append(new_posts)
 
