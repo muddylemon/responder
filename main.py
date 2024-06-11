@@ -89,8 +89,7 @@ def scrape_google_news(search_term: str, num_results: int = 5) -> list[dict]:
     for result in final_results:
         # Convert datetime objects to strings before serializing to JSON
         result['datetime'] = result['datetime'].strftime('%Y-%m-%d')
-        result['link'] = remove_query_parameters(
-            result['link'], ['ved', 'usg'])
+        result['link'] = result['link'].split('ved=')[0]
 
     return list(final_results)[:num_results]
 

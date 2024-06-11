@@ -58,23 +58,30 @@
         postsContent.innerHTML = "";
 
         data.forEach((post) => {
+          const source_docs = [...new Set(post.source_docs)];
           const articleInfo = `
+                    <article>
+                      <header>
                     <h2>${post.title}</h2>
                     <p><strong>Description:</strong> ${post.desc}</p>
                     <p><strong>Date:</strong> ${post.date}</p>
                     <p><strong>Link:</strong> <a href="${
                       post.link
                     }" target="_blank">${post.link}</a></p>
-                    <p><strong>Plan:</strong> ${post.plan.replace(
-                      /\n/g,
-                      "<br>"
-                    )}</p>
-                    <p><strong>Summary Retrieval:</strong> ${post.answer}</p>
-                    <p><strong>Source Docs:</strong> ${post.source_docs.map(
-                      (doc) => {
-                        return `<p>${doc}</p>`;
-                      }
-                    )}</p>
+                    </header>
+                    <div>
+                    <h3>Plan:</h3>
+                    <p>${post.plan.replace(/\n/g, "<br>")}</p>
+                    </div>
+                    <div id="rag-results">
+                    <h3>Summary Retrieval:</h3> 
+                    <p>${post.answer}</p>
+                    <h3>Source Docs:</h3> 
+                    <div>
+                      ${source_docs.map((doc) => `<p>${doc}</p>`).join("")}
+                    </div>
+                    </div>
+                    </article>
                 `;
           postsContent.innerHTML += articleInfo;
 
