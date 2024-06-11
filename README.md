@@ -1,6 +1,6 @@
 # Responder
 
-Responder is a social media automation tool designed to generate and schedule posts for World Wide Technology (WWT) across various platforms based on recent Google News articles. 
+Responder is a social media automation tool designed to generate and schedule posts for World Wide Technology (WWT) across various platforms based on recent Google News articles.
 
 ## Table of Contents
 

@@ -142,8 +142,9 @@ excerpts of the source documents:
     posts, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
                         context=[], model=LLM_MODEL)
 
-    posts = re.sub(r"Post \d+[:\.\-\s]*", "", posts)
-    posts = re.sub(r"^\d+\.\s*", "", posts, flags=re.MULTILINE)
+    # behold the limitations of AI!
+    posts = re.sub(r"Post \d+[:\.\-\s]*", "\n", posts)
+    posts = re.sub(r"^\d+\.\s*", "\n", posts, flags=re.MULTILINE)
 
     if "###END###" not in posts:
         posts = re.sub(r"\n\n\n", "###END###", posts)
@@ -155,6 +156,10 @@ excerpts of the source documents:
 
 
 def generate_social_media_plan(article: str, topic: str, docs: dict) -> str:
+    """
+    Generates a social media plan based on the given article and context documents.
+
+    """
 
     doc_content = '\n\n'.join(set([doc.page_content.strip() for doc in docs]))
 
@@ -173,14 +178,13 @@ The plan should explain:
  * Facts or quotes to consider including.
 
     """
-    prompt = f"""
-    Write a social media plan in response to this article: 
+    prompt = f""" Write a social media plan in response to this article: 
 Topic: {topic}
 Title: {article['title']} 
 Summary: {article['desc']}
 Original Link: {article['link']}
 
-For Additional Context, excerpts of the source documents:
+For Additional Context, consult these excerpts:
 {doc_content}
     """
     plan, _ = generate(prompt=prompt, systemPrompt=systemPrompt,
@@ -189,6 +193,7 @@ For Additional Context, excerpts of the source documents:
 
 
 def main():
+
     if len(sys.argv) < 2:
         print("Usage: python main.py <search_term>")
         sys.exit(1)
