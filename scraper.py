@@ -90,32 +90,31 @@ def parse_news_page(html_content):
 
     return news_articles
 
-# Loop through pages from 3 to 43 for blog posts
-# for page_num in range(3, 44):
-#     print(f"Scraping blog page {page_num}")
-#     # URL of the summary page to scrape
-#     summary_url = f'https://www.wwt.com/corporate/blog?page={page_num}&sortBy=newest'
 
-#     # Get the HTML content of the summary page
-#     summary_html_content = get_html_content(summary_url)
+for page_num in range(1, 44):
+    print(f"Scraping blog page {page_num}")
+    # URL of the summary page to scrape
+    summary_url = f'https://www.wwt.com/corporate/blog?page={page_num}&sortBy=newest'
 
-#     # Parse the summary page to get blog post links
-#     blog_posts = parse_summary_page(summary_html_content)
+    # Get the HTML content of the summary page
+    summary_html_content = get_html_content(summary_url)
 
-#     # Fetch the detailed content of each blog post
-#     for post in blog_posts:
-#         print(f"Fetching details for: {post['title']}")
-#         post_html_content = get_html_content(post['link'])
-#         post['body'] = parse_blog_post_page(post_html_content)
-#         time.sleep(1)  # Sleep to avoid overloading the server
+    # Parse the summary page to get blog post links
+    blog_posts = parse_summary_page(summary_html_content)
 
-#         # Save the blog post to a text file immediately
-#         save_blog_post(post)
+    # Fetch the detailed content of each blog post
+    for post in blog_posts:
+        print(f"Fetching details for: {post['title']}")
+        post_html_content = get_html_content(post['link'])
+        post['body'] = parse_blog_post_page(post_html_content)
+        time.sleep(1)  # Sleep to avoid overloading the server
 
-# print("Blog posts saved successfully.")
+        # Save the blog post to a text file immediately
+        save_blog_post(post)
+
+print("Blog posts saved successfully.")
 
 
-# Loop through pages from 1 to 17 for news articles
 for page_num in range(1, 18):
     print(f"Scraping news page {page_num}")
     # URL of the news page to scrape

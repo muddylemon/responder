@@ -6,7 +6,7 @@ from GoogleNews import GoogleNews
 
 from llm import generate
 from retriever import search
-from models import MISTRAL_OPENORCA as LLM_MODEL
+from models import LLAMA3 as LLM_MODEL
 from utils import slugify, pc
 
 import warnings

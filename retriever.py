@@ -10,9 +10,6 @@ from constants import CHROMA_SETTINGS
 from models import LLAMA3
 model = LLAMA3
 
-# https://www.sbert.net/docs/pretrained_models.html
-
-# all-mpnet-base-v2  slower/better quality
 embeddings_model_name = "all-MiniLM-L6-v2"
 persist_directory = "db"
 
