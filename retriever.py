@@ -15,7 +15,7 @@ model = LLAMA3
 # all-mpnet-base-v2  slower/better quality
 embeddings_model_name = "all-MiniLM-L6-v2"
 persist_directory = "db"
-target_source_chunks = 12
+target_source_chunks = 24
 
 
 def search(query: str, hide_source: bool = False, mute_stream: bool = False) -> tuple[str, list[dict]]:
